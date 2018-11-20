@@ -42,7 +42,7 @@ Let's join efforts!
 You can install via pip from our Github repository directly (pending to submit to [pypi](https://pypi.org))
 
 ```shell
-pip install https://github.com/PodgroupConnectivity/python-gsmmodem-manager
+pip install git+https://github.com/PodgroupConnectivity/python-gsmmodem-manager.git@9a9ccfb7f0e7de4124c7c6f7791a721e20383e73
 ```
 
 As per the lack of dependencies, It has been succesfully tested on the following platforms:
