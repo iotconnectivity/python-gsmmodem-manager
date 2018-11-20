@@ -45,6 +45,12 @@ You can install via pip from our Github repository directly (pending to submit t
 pip install https://github.com/PodgroupConnectivity/python-gsmmodem-manager
 ```
 
+As per the lack of dependencies, It has been succesfully tested on the following platforms:
+
+- Linux (Intel/AMD Ubuntu 18.04)
+- Raspberry-Pi 3 (ARM Raspbian GNU/Linux 8)
+- Rasbberry-Pi Zero (ARM Raspbian GNU/Linux 8)
+
 ## Usage
 
 ```python
