@@ -24,6 +24,8 @@ class GSMModem(object):
     """Super class for GSM modems. Only Standard Hayes AT commands supported."""
 
     __conf = {'devicefile':'', 'baudrate': ''}
+    __vendor_id = 0x0000
+    __product_id = 0x0000
 
     # As per ETSI TS 127 007 v10.3.0 AT Commands set for User Equipment
     # Format of dictionary
@@ -220,6 +222,8 @@ class GSMModem(object):
 class HuaweiModem(GSMModem):
     """Super class for Huawei GSM USB dongles, supporting Huawei extended AT commands and specific definitions."""
 
+    __vendor_id = 0x12d1
+
     STAT_NOTREG, STAT_REGHOME, STAT_SEARCH, STAT_DENIED, STAT_UNK, STAT_REGROAM = '0', '1', '2', '3', '4', '5'
 
     def __init__(self, devicefile, baudrate, timeout=25):
@@ -247,6 +251,8 @@ class HuaweiModem(GSMModem):
 
 # Further details HUAWEI_MS2131_AT_Command_Interface_Specification
 class HuaweiMS2131(HuaweiModem):
+
+    __product_id = 0x1506
 
     MODE_AUTO, MODE_GSM, MODE_WCDMA, MODE_NOTCHANGED = '2', '13', '14', '16'
     ACT_AUTO, ACT_GSM, ACT_UMTS, ACT_NOTCHANGED = '0', '1', '2', '3'
@@ -302,6 +308,8 @@ class HuaweiMS2131(HuaweiModem):
 # TODO: Look for HUAWEI_MS2372_AT_Command_Interface_Specification
 class HuaweiMS2372h(HuaweiModem):
 
+    __product_id = 0x1506
+
     ACT_AUTO, ACT_GSM, ACT_UMTS, ACT_LTE, ACT_NOTCHANGED = '00', '01', '02', '03', '99'
     ROAM_NO, ROAM_YES, ROAM_NA = '0', '1', '2'
 
@@ -345,6 +353,8 @@ class HuaweiE3372(HuaweiModem):
     technolgy, this info is returned as a list in
     response"""
 
+    __product_id = 0x155e
+
     ACT_AUTO, ACT_GSM, ACT_UMTS, ACT_LTE, ACT_NOTCHANGED = '00', '01', '02', '03', '99'
     ROAM_NO, ROAM_YES, ROAM_NA = '0', '1', '2'
 
@@ -364,8 +374,8 @@ class HuaweiE3372(HuaweiModem):
         command = 'AT^SYSCFGEX?'
         response = self._send_command(command)
 
-        if len(response) == 2 and response[1] == 'OK': 
-            acqorder, band, roam, srvdomain, lteband = response[0].split(':')[1].split(',')
+        if len(response) == 3 and response[2] == 'OK':
+            acqorder, band, roam, srvdomain, lteband = response[1].split(':')[1].split(',')
             return True, command, {'acqorder': acqorder.replace('"',''), 'roam': roam}
         else:
             return False, command, response
@@ -376,7 +386,7 @@ class HuaweiE3372(HuaweiModem):
         command = 'AT^SYSCFGEX="' + act + '",3FFFFFFF,1,2,7FFFFFFFFFFFFFFF,,' 
         
         # Lesser waiting time translates to error 
-        response = self._send_command(command, 2)   
+        response = self._send_command(command, 2)
         
         # It can happen that switching bewteen ACT some
         # trash characteres are generated
