@@ -253,6 +253,15 @@ class HuaweiModem(GSMModem):
     def get_operator(self):
         return super(HuaweiModem, self).get_operator(5) # 5 secs for this specific device worked
 
+    def get_iccid(self, sleeptime=2):
+        command = "AT^ICCID?"
+        response = self._send_command(command, sleeptime)
+
+        if len(response) == 2 and response[1] == 'OK':
+            return True, command, response[0].split(': ')[1]
+        else:
+            return False, command, response
+
 
 # Further details HUAWEI_MS2131_AT_Command_Interface_Specification
 class HuaweiMS2131(HuaweiModem):
