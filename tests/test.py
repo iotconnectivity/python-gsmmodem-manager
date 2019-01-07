@@ -17,7 +17,8 @@ from gsmmodem_manager import HuaweiMS2131
 modem = HuaweiMS2131(len(sys.argv) >= 2 and sys.argv[1] or '/dev/ttyUSB0', '9600')
 
 # The testing suite also works with HuaweiMS2372h
-# modem = HuaweiMS2372h(len(sys.argv) >= 2 and sys.argv[1] or '/dev/ttyUSB0', '9600')
+# from gsmmodem_manager import HuaweiMS2372h
+# modem = HuaweiMS2372h(len(sys.argv) >= 2 and sys.argv[1] or '/dev/ttyUSB0', 115200)
 
 def test_generic_commands(modem):
     print modem.get_imsi()

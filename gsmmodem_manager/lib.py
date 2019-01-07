@@ -24,8 +24,9 @@ class GSMModem(object):
     """Super class for GSM modems. Only Standard Hayes AT commands supported."""
 
     __conf = {'devicefile':'', 'baudrate': ''}
-    __vendor_id = 0x0000
-    __product_id = 0x0000
+
+    VENDOR_ID, PRODUCT_ID = 0x0000, 0x0000,
+    VENDOR, PRODUCT = 'GSM Modem', 'Generic'
 
     # As per ETSI TS 127 007 v10.3.0 AT Commands set for User Equipment
     # Format of dictionary
@@ -48,6 +49,9 @@ class GSMModem(object):
         self.__ser = serial.Serial(devicefile, baudrate, timeout=25)
         self._logger = logging.getLogger('carrierwatchdog.modem')
         if not self._logger.handlers: logging.basicConfig() # In the case there's no parent logger, lets log anyway in basic mode
+
+    def __str__(self):
+        return self.VENDOR + ' ' + self.PRODUCT + ' (' + hex(self.VENDOR_ID) + ',' + hex(self.PRODUCT_ID) + ')'
 
     # By default 2 seconds of sleep before reading command response. Randomly choosed :D
     def _send_command(self, command, sleeptime=2):
@@ -222,7 +226,8 @@ class GSMModem(object):
 class HuaweiModem(GSMModem):
     """Super class for Huawei GSM USB dongles, supporting Huawei extended AT commands and specific definitions."""
 
-    __vendor_id = 0x12d1
+    VENDOR_ID = 0x12d1
+    VENDOR = 'Huawei'
 
     STAT_NOTREG, STAT_REGHOME, STAT_SEARCH, STAT_DENIED, STAT_UNK, STAT_REGROAM = '0', '1', '2', '3', '4', '5'
 
@@ -252,7 +257,8 @@ class HuaweiModem(GSMModem):
 # Further details HUAWEI_MS2131_AT_Command_Interface_Specification
 class HuaweiMS2131(HuaweiModem):
 
-    __product_id = 0x1506
+    PRODUCT_ID = 0x1506
+    PRODUCT = 'MS2131'
 
     MODE_AUTO, MODE_GSM, MODE_WCDMA, MODE_NOTCHANGED = '2', '13', '14', '16'
     ACT_AUTO, ACT_GSM, ACT_UMTS, ACT_NOTCHANGED = '0', '1', '2', '3'
@@ -308,7 +314,8 @@ class HuaweiMS2131(HuaweiModem):
 # TODO: Look for HUAWEI_MS2372_AT_Command_Interface_Specification
 class HuaweiMS2372h(HuaweiModem):
 
-    __product_id = 0x1506
+    PRODUCT_ID = 0x1506
+    PRODUCT = 'MS2372h'
 
     ACT_AUTO, ACT_GSM, ACT_UMTS, ACT_LTE, ACT_NOTCHANGED = '00', '01', '02', '03', '99'
     ROAM_NO, ROAM_YES, ROAM_NA = '0', '1', '2'
@@ -353,7 +360,8 @@ class HuaweiE3372(HuaweiModem):
     technolgy, this info is returned as a list in
     response"""
 
-    __product_id = 0x155e
+    PRODUCT_ID = 0x155e
+    PRODUCT = 'E3372'
 
     ACT_AUTO, ACT_GSM, ACT_UMTS, ACT_LTE, ACT_NOTCHANGED = '00', '01', '02', '03', '99'
     ROAM_NO, ROAM_YES, ROAM_NA = '0', '1', '2'
