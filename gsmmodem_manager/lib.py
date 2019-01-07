@@ -113,7 +113,7 @@ class GSMModem(object):
             return False, command, response
 
     # First attach to PS domain. Let's give it 10 secs at least.
-    def activate_pdp_context(self, sleeptime=5):
+    def activate_pdp_context(self, sleeptime=10):
         command_pdp_attachment = 'AT+CGATT=1'
         command_pdp_activate = 'AT+CGACT=1,1'
 
@@ -382,8 +382,8 @@ class HuaweiE3372(HuaweiModem):
         command = 'AT^SYSCFGEX?'
         response = self._send_command(command)
 
-        if len(response) == 3 and response[2] == 'OK':
-            acqorder, band, roam, srvdomain, lteband = response[1].split(':')[1].split(',')
+        if len(response) == 2 and response[1] == 'OK':
+            acqorder, band, roam, srvdomain, lteband = response[0].split(':')[1].split(',')
             return True, command, {'acqorder': acqorder.replace('"',''), 'roam': roam}
         else:
             return False, command, response
