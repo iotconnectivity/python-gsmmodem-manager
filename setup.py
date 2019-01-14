@@ -18,4 +18,7 @@ setup(name='gsmmodem_manager',
       packages=['gsmmodem_manager'],
       platforms=['linux2'],
       license='GNU LESSER GENERAL PUBLIC LICENSE',
+      install_requires=[
+          'pyserial',
+      ],
 )
