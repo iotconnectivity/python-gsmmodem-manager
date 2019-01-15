@@ -377,7 +377,14 @@ class HuaweiE3372(HuaweiModem):
 
     def __init__(self, devicefile, baudrate, timeout=25):
         super(HuaweiE3372, self).__init__(devicefile, baudrate, timeout)
-
+        echo_off = False
+        counter = 0
+        while not echo_off:
+            if counter == 3:
+                raise Exception('Cannot set echo off')
+            echo_off,_,_ = self.set_echo(on=False)
+            counter += 1
+    
     def stop_periodic_messages(self):
         command = 'AT^CURC=0'
         response = self._send_command(command)
@@ -421,7 +428,7 @@ class HuaweiE3372(HuaweiModem):
         elif not on:
             command = 'ATE0'
         
-        response = self._send_command(command) 
+        response = self._send_command(command, sleeptime=5) 
 
         if len(response) and response[0] == 'OK':
             return True, command, None
