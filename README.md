@@ -37,12 +37,22 @@ So far, the list of supported modems are:
 Plese have a look the [Contributing](#contributing) section to extend support for other modems.
 Let's join efforts!
 
+## Installation Prerequisites
+You need the packages __python-pip__ and __git__ in order to install this library:
+```shell
+sudo apt install python-pip git
+```
+Verify that the user is part of the groups __dialout__ and __plugdev__. If it's not yet the case:
+```
+sudo usermod -aG dialout,plugdev $USER
+```
+
 ## Installation
 
 You can install via pip from our Github repository directly (pending to submit to [pypi](https://pypi.org))
 
 ```shell
-pip install git+https://github.com/PodgroupConnectivity/python-gsmmodem-manager.git@9a9ccfb7f0e7de4124c7c6f7791a721e20383e73
+pip install git+https://github.com/PodgroupConnectivity/python-gsmmodem-manager.git
 ```
 
 As per the lack of dependencies, It has been succesfully tested on the following platforms:
