@@ -23,7 +23,7 @@ def signal_quality(rssi_dBm):
 class GSMModem(object):
     """Super class for GSM modems. Only Standard Hayes AT commands supported."""
 
-    __conf = {'devicefile':'', 'baudrate': ''}
+    __conf = {'devicefile':'', 'baudrate':''}
 
     VENDOR_ID, PRODUCT_ID = 0x0000, 0x0000,
     VENDOR, PRODUCT = 'GSM Modem', 'Generic'
@@ -69,7 +69,7 @@ class GSMModem(object):
     def set_operator(self, plmn, sleeptime=2):
         command = 'AT+COPS=1,2,"' + plmn + '"'
         response = self._send_command(command, sleeptime)
-        
+
         if len(response) and response[0] == 'OK': 
             return True, command, None
         elif response is None or response == []:
@@ -195,10 +195,10 @@ class GSMModem(object):
 
     def set_apn(self, context_number, apn_name, sleeptime=2):
         assert isinstance(context_number, int), "PDP context # must be int"
-        command = 'AT+CGDCONT='+ str(context_number) +',"IP","'+ apn_name + '",""'
+        command = 'AT+CGDCONT=' + str(context_number) + ',"IP","' + apn_name + '",""'
         response = self._send_command(command, sleeptime)
 
-        if len(response) == 1 and response[0] == 'OK': 
+        if len(response) == 1 and response[0] == 'OK':
             return True, command, response[0]
         else:
             return False, command, response
@@ -210,7 +210,7 @@ class GSMModem(object):
         # Sometimes modem send trash characters before the OK
         # but if OK is the last line then everything went well
         # this might be caused by the noise in serial connection
-        if len(response) > 0 and response[-1] == 'OK': 
+        if len(response) > 0 and response[-1] == 'OK':
             return True, command, response
         else:
             return False, command, response
@@ -237,9 +237,9 @@ class HuaweiModem(GSMModem):
     # Surprisingly CGREG returns LAC/CellID. CREG doesn't. Is this Huawei specific behaviour?
     def get_registration_info(self):
         command = 'AT+CGREG?'
-        response = self._send_command(command) 
+        response = self._send_command(command)
 
-        if len(response) == 2 and response[1] == 'OK': 
+        if len(response) == 2 and response[1] == 'OK':
             params = ['n', 'stat', 'lac', 'cid']
             reg = map(lambda item: item.replace('"', '').strip(), response[0].split(':')[1].split(','))
             return True, command, dict(zip(params,reg))
@@ -276,6 +276,20 @@ class HuaweiMS2131(HuaweiModem):
     def __init__(self, devicefile, baudrate, timeout=25):
         super(HuaweiMS2131, self).__init__(devicefile, baudrate, timeout)
 
+    def get_registration_info(self):
+        command = 'AT+CREG?'
+        response = self._send_command(command)
+
+        if len(response) == 2 and response[1] == 'OK':
+            params = ['n', 'stat', 'lac', 'cid']
+            reg = map(lambda item: item.replace('"', '').strip(),
+                      response[0].split(':')[1].split(','))
+            return True, command, dict(zip(params, reg))
+        else:
+            self._logger.error(
+                'Get registration info failed with: ' + str(response))
+            return False, command, response
+
     def get_access_technology(self):
         # As per HUAWEI_MS2131_AT_Command_Interface_Specification Section 9.6: Command of Setting System Configurations
         command = 'AT^SYSCFG?'
@@ -311,7 +325,7 @@ class HuaweiMS2131(HuaweiModem):
         elif not on:
             command = 'ATE0'
         
-        response = self._send_command(command) 
+        response = self._send_command(command, sleeptime=5) 
 
         if len(response) and response[0] == 'OK':
             return True, command, None
