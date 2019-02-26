@@ -46,7 +46,7 @@ class GSMModem(object):
 
     def __init__(self, devicefile, baudrate, timeout=25):
         self.__conf['devicefile'], self.__conf['baudrate'] = devicefile, baudrate
-        self.__ser = serial.Serial(devicefile, baudrate, timeout=25)
+        self.__ser = serial.Serial(devicefile, baudrate, timeout=25, dsrdtr=True, rtscts=True)
         self._logger = logging.getLogger('carrierwatchdog.modem')
         if not self._logger.handlers: logging.basicConfig() # In the case there's no parent logger, lets log anyway in basic mode
 
@@ -221,6 +221,8 @@ class GSMModem(object):
     def close_connection(self):
         self.__ser.close()
 
+    def open_connection(self):
+        self.__ser.open()
 
 # Further details HUAWEI_MS2131_AT_Command_Interface_Specification
 class HuaweiModem(GSMModem):
