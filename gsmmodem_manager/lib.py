@@ -66,6 +66,42 @@ class GSMModem(object):
 
         return ret
 
+    def get_manufacturer(self):
+        command = 'AT+GMI'
+        response = self._send_command(command)
+
+        if len(response) == 2 and response[1] == 'OK':
+            return True, command, response[0]
+        else:
+            return False, command, response
+
+    def get_model(self):
+        command = 'AT+GMM'
+        response = self._send_command(command)
+
+        if len(response) == 2 and response[1] == 'OK':
+            return True, command, response[0]
+        else:
+            return False, command, response
+
+    def get_revision(self):
+        command = 'AT+GMR'
+        response = self._send_command(command)
+
+        if len(response) == 2 and response[1] == 'OK':
+            return True, command, response[0]
+        else:
+            return False, command, response
+
+    def get_serial_number(self):
+        command = 'AT+GSN'
+        response = self._send_command(command)
+
+        if len(response) == 2 and response[1] == 'OK':
+            return True, command, response[0]
+        else:
+            return False, command, response
+
     def set_operator(self, plmn, sleeptime=2):
         command = 'AT+COPS=1,2,"' + plmn + '"'
         response = self._send_command(command, sleeptime)
