@@ -20,6 +20,14 @@ def signal_quality(rssi_dBm):
     elif rssi_dBm >= -73: return 'Excellent'
     else: return "Not valid rssi_dBm"
 
+basic_methods = {
+        'get_manufacturer': 'AT+GMI',
+        'get_model': 'AT+GMM',
+        'get_revision': 'AT+GMR',
+        'get_serial_number': 'AT+GSN',
+        'get_imsi': 'AT+CIMI'
+}
+
 class GSMModem(object):
     """Super class for GSM modems. Only Standard Hayes AT commands supported."""
 
@@ -27,7 +35,7 @@ class GSMModem(object):
 
     VENDOR_ID, PRODUCT_ID = 0x0000, 0x0000,
     VENDOR, PRODUCT = 'GSM Modem', 'Generic'
-
+    
     # As per ETSI TS 127 007 v10.3.0 AT Commands set for User Equipment
     # Format of dictionary
     #    {
@@ -49,12 +57,39 @@ class GSMModem(object):
         self.__ser = serial.Serial(devicefile, baudrate, timeout=25, dsrdtr=True, rtscts=True)
         self._logger = logging.getLogger('carrierwatchdog.modem')
         if not self._logger.handlers: logging.basicConfig() # In the case there's no parent logger, lets log anyway in basic mode
+        self._create_basic_methods()
 
     def __str__(self):
         return self.VENDOR + ' ' + self.PRODUCT + ' (' + hex(self.VENDOR_ID) + ',' + hex(self.PRODUCT_ID) + ')'
 
+    def _create_basic_methods(self):
+        for method_name, at_command in basic_methods.items():
+            # make the method body
+            method = self._make_at_method(method_name, at_command)
+            # set the method as object attribute
+            setattr(self, method_name, method)
+
+    # generate a generic AT method with boolean response which has the following specifications:
+    # - expected answer: array with size of 3
+    # - the answer to display is located in cell 1
+    # - the cell which confirms that we got an answer is cell 2
+    def _make_at_method(self, name, at_command):
+        def _basic_command_wrapper():
+            desired_response_size = 3
+            answer_field = 1
+            ok_field = 2
+
+            response = self._send_command(at_command)
+
+            if len(response) == desired_response_size and response[ok_field] == 'OK':
+                return True, at_command, response[answer_field]
+            else:
+                return False, at_command, response
+        return _basic_command_wrapper
+
     # By default 2 seconds of sleep before reading command response. Randomly choosed :D
-    def _send_command(self, command, sleeptime=2):
+    def _send_command(self, command, sleeptime=1):
+        time.sleep(sleeptime)
         self.__ser.write(command+"\r\n")
         time.sleep(sleeptime)
 
@@ -65,42 +100,6 @@ class GSMModem(object):
                 ret.append(msg)
 
         return ret
-
-    def get_manufacturer(self):
-        command = 'AT+GMI'
-        response = self._send_command(command)
-
-        if len(response) == 2 and response[1] == 'OK':
-            return True, command, response[0]
-        else:
-            return False, command, response
-
-    def get_model(self):
-        command = 'AT+GMM'
-        response = self._send_command(command)
-
-        if len(response) == 2 and response[1] == 'OK':
-            return True, command, response[0]
-        else:
-            return False, command, response
-
-    def get_revision(self):
-        command = 'AT+GMR'
-        response = self._send_command(command)
-
-        if len(response) == 2 and response[1] == 'OK':
-            return True, command, response[0]
-        else:
-            return False, command, response
-
-    def get_serial_number(self):
-        command = 'AT+GSN'
-        response = self._send_command(command)
-
-        if len(response) == 2 and response[1] == 'OK':
-            return True, command, response[0]
-        else:
-            return False, command, response
 
     def set_operator(self, plmn, sleeptime=2):
         command = 'AT+COPS=1,2,"' + plmn + '"'
@@ -199,24 +198,6 @@ class GSMModem(object):
         sq = int(sq) # Just in case it is not a integer
         return self.RSSI_DBM[sq]
 
-    def get_imsi(self, sleeptime=2):
-        command = "AT+CIMI"
-        response = self._send_command(command, sleeptime)
-
-        if len(response) == 2 and response[1] == 'OK': 
-            return True, command, response[0]
-        else: 
-            return False, command, response
-
-    def get_imei(self, sleeptime=2):
-        command = "AT+GSN"
-        response = self._send_command(command, sleeptime)
-
-        if len(response) == 2 and response[1] == 'OK': 
-            return True, command, response[0]
-        else: 
-            return False, command, response
-
     def get_apn(self):
         command = 'AT+CGDCONT?'
         response = self._send_command(command, sleeptime=1)
@@ -251,14 +232,14 @@ class GSMModem(object):
         else:
             return False, command, response
 
-    def get_serial_conf(self):
-        return self.__conf
-
     def close_connection(self):
         self.__ser.close()
 
     def open_connection(self):
         self.__ser.open()
+
+    def get_serial_conf(self):
+        return self.__conf
 
 # Further details HUAWEI_MS2131_AT_Command_Interface_Specification
 class HuaweiModem(GSMModem):
