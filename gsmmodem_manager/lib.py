@@ -4,7 +4,9 @@
 ###
 #
 # Copyright (c) 2016-2018 Pod Group Ltd
-# Authors : J. Félix Ontañón <felix.ontanon@podgroup.com>
+# Authors : 
+# - J. Félix Ontañón <felix.ontanon@podgroup.com>
+# - Pius T. Loosli Hirsbrunner <pius.loosli@podgroup.com>
 
 import serial
 import time
@@ -57,6 +59,7 @@ class GSMModem(object):
         self.__ser = serial.Serial(devicefile, baudrate, timeout=25, dsrdtr=True, rtscts=True)
         self._logger = logging.getLogger('carrierwatchdog.modem')
         if not self._logger.handlers: logging.basicConfig() # In the case there's no parent logger, lets log anyway in basic mode
+        self.set_echo(on=False)
         self._create_basic_methods()
 
     def __str__(self):
@@ -65,7 +68,7 @@ class GSMModem(object):
     def _create_basic_methods(self):
         for method_name, at_command in basic_methods.items():
             # make the method body
-            method = self._make_at_method(method_name, at_command)
+            method = self._make_at_method(method_name, at_command, echoState=False)
             # set the method as object attribute
             setattr(self, method_name, method)
 
@@ -73,13 +76,19 @@ class GSMModem(object):
     # - expected answer: array with size of 3
     # - the answer to display is located in cell 1
     # - the cell which confirms that we got an answer is cell 2
-    def _make_at_method(self, name, at_command):
+    def _make_at_method(self, name, at_command,echoState=True):
         def _basic_command_wrapper():
-            desired_response_size = 3
-            answer_field = 1
-            ok_field = 2
+            answer_field = 0
+            ok_field = 1
+            if(echoState):
+                answer_field += 1
+                ok_field += 1
+                desired_response_size = 3
+            else:
+                desired_response_size = 2
 
             response = self._send_command(at_command)
+
 
             if len(response) == desired_response_size and response[ok_field] == 'OK':
                 return True, at_command, response[answer_field]
@@ -89,6 +98,7 @@ class GSMModem(object):
 
     # By default 2 seconds of sleep before reading command response. Randomly choosed :D
     def _send_command(self, command, sleeptime=1):
+        # wait a little to prevent errors
         time.sleep(sleeptime)
         self.__ser.write(command+"\r\n")
         time.sleep(sleeptime)
@@ -100,6 +110,25 @@ class GSMModem(object):
                 ret.append(msg)
 
         return ret
+
+    # As per 3GPP TS 27.007 v15.4.0 AT command set for User Equipment
+    # As recommended with default value "on" (TA echoes commands back)
+    def set_echo(self, on=True):
+        print "echo" + str(on)
+        """Turn echo mode ON or OFF
+        - on: True (activate) / False (deactivate) echo"""
+        if on:
+            command = 'ATE1'
+        elif not on:
+            command = 'ATE0'
+        
+        response = self._send_command(command) 
+
+        if len(response) and response[0] == 'OK':
+            return True, command, None
+            
+        else:
+            return False, command, response
 
     def set_operator(self, plmn, sleeptime=2):
         command = 'AT+COPS=1,2,"' + plmn + '"'
@@ -335,23 +364,6 @@ class HuaweiMS2131(HuaweiModem):
         else:
             return False, command, response
 
-    def set_echo(self, on=False):
-        """Turn echo mode ON or OFF
-        - on: True (activate) / False (deactivate) echo
-        This lib expects the echo to be OFF"""
-        if on:
-            command = 'ATE1'
-        elif not on:
-            command = 'ATE0'
-        
-        response = self._send_command(command, sleeptime=5) 
-
-        if len(response) and response[0] == 'OK':
-            return True, command, None
-            
-        else:
-            return False, command, response
-
 
 # TODO: Look for HUAWEI_MS2372_AT_Command_Interface_Specification
 class HuaweiMS2372h(HuaweiModem):
@@ -449,23 +461,6 @@ class HuaweiE3372(HuaweiModem):
         # trash characteres are generated
         if len(response) > 0 and response[-1] == 'OK':
             return True, command, response
-        else:
-            return False, command, response
-
-    def set_echo(self, on=False):
-        """Turn echo mode ON or OFF
-        - on: True (activate) / False (deactivate) echo
-        This lib expects the echo to be OFF"""
-        if on:
-            command = 'ATE1'
-        elif not on:
-            command = 'ATE0'
-        
-        response = self._send_command(command, sleeptime=5) 
-
-        if len(response) and response[0] == 'OK':
-            return True, command, None
-            
         else:
             return False, command, response
 
