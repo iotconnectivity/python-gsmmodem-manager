@@ -306,7 +306,7 @@ class HuaweiModem(GSMModem):
         response = self._send_command(command, sleeptime)
 
         if len(response) == 2 and response[1] == 'OK':
-            return True, command, response[0].split(': ')[1]
+            return True, command, response[0].split(': ')[1].split('F')[0]
         else:
             return False, command, response
 
