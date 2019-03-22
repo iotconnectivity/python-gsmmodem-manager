@@ -22,14 +22,6 @@ def signal_quality(rssi_dBm):
     elif rssi_dBm >= -73: return 'Excellent'
     else: return "Not valid rssi_dBm"
 
-basic_methods = {
-        'get_manufacturer': 'AT+GMI',
-        'get_model': 'AT+GMM',
-        'get_revision': 'AT+GMR',
-        'get_serial_number': 'AT+GSN',
-    	'get_imei': 'AT+GSN',
-        'get_imsi': 'AT+CIMI'
-}
 
 class GSMModem(object):
     """Super class for GSM modems. Only Standard Hayes AT commands supported."""
@@ -61,42 +53,10 @@ class GSMModem(object):
         self._logger = logging.getLogger('carrierwatchdog.modem')
         if not self._logger.handlers: logging.basicConfig() # In the case there's no parent logger, lets log anyway in basic mode
         self.set_echo(on=False)
-        self._create_basic_methods()
 
     def __str__(self):
         return self.VENDOR + ' ' + self.PRODUCT + ' (' + hex(self.VENDOR_ID) + ',' + hex(self.PRODUCT_ID) + ')'
-
-    def _create_basic_methods(self):
-        for method_name, at_command in basic_methods.items():
-            # make the method body
-            method = self._make_at_method(method_name, at_command, echoState=False)
-            # set the method as object attribute
-            setattr(self, method_name, method)
-
-    # generate a generic AT method with boolean response which has the following specifications:
-    # - expected answer: array with size of 3
-    # - the answer to display is located in cell 1
-    # - the cell which confirms that we got an answer is cell 2
-    def _make_at_method(self, name, at_command,echoState=True):
-        def _basic_command_wrapper():
-            answer_field = 0
-            ok_field = 1
-            if(echoState):
-                answer_field += 1
-                ok_field += 1
-                desired_response_size = 3
-            else:
-                desired_response_size = 2
-
-            response = self._send_command(at_command)
-
-
-            if len(response) == desired_response_size and response[ok_field] == 'OK':
-                return True, at_command, response[answer_field]
-            else:
-                return False, at_command, response
-        return _basic_command_wrapper
-
+  
     # By default 2 seconds of sleep before reading command response. Randomly choosed :D
     def _send_command(self, command, sleeptime=2):
         self.__ser.write(command+"\r\n")
@@ -127,6 +87,43 @@ class GSMModem(object):
             
         else:
             return False, command, response
+    
+    def at_command_wrapper(command, sleeptime):
+        """"Decorator used to generate basic AT commands with a standard response size"""
+        def tags_decorator(function):
+            def func_wrapper(self, *args):
+                response = self._send_command(command, sleeptime)
+
+                if len(response) == 2 and response[1] == 'OK':
+                    return True, command, response[0]
+                else:
+                    return False, command, response
+            return func_wrapper
+        return tags_decorator
+
+    @at_command_wrapper(command='AT+GMI', sleeptime=1)
+    def get_manufacturer():
+        pass
+
+    @at_command_wrapper(command='AT+GMM', sleeptime=1)
+    def get_model():
+        pass
+
+    @at_command_wrapper(command='AT+GMR', sleeptime=1)
+    def get_revision():
+        pass
+
+    @at_command_wrapper(command='AT+GSN', sleeptime=1)
+    def get_serial_number():
+        pass
+
+    @at_command_wrapper(command='AT+GSN', sleeptime=1)
+    def get_imei():
+        pass
+
+    @at_command_wrapper(command='AT+CIMI', sleeptime=1)
+    def get_imsi():
+        pass
 
     def set_operator(self, plmn, sleeptime=2):
         command = 'AT+COPS=1,2,"' + plmn + '"'
