@@ -27,6 +27,7 @@ basic_methods = {
         'get_model': 'AT+GMM',
         'get_revision': 'AT+GMR',
         'get_serial_number': 'AT+GSN',
+    	'get_imei': 'AT+GSN',
         'get_imsi': 'AT+CIMI'
 }
 
@@ -97,9 +98,7 @@ class GSMModem(object):
         return _basic_command_wrapper
 
     # By default 2 seconds of sleep before reading command response. Randomly choosed :D
-    def _send_command(self, command, sleeptime=1):
-        # wait a little to prevent errors
-        time.sleep(sleeptime)
+    def _send_command(self, command, sleeptime=2):
         self.__ser.write(command+"\r\n")
         time.sleep(sleeptime)
 
@@ -113,8 +112,7 @@ class GSMModem(object):
 
     # As per 3GPP TS 27.007 v15.4.0 AT command set for User Equipment
     # As recommended with default value "on" (TA echoes commands back)
-    def set_echo(self, on=True):
-        print "echo" + str(on)
+    def set_echo(self, on=True, sleeptime=10):
         """Turn echo mode ON or OFF
         - on: True (activate) / False (deactivate) echo"""
         if on:
@@ -122,7 +120,7 @@ class GSMModem(object):
         elif not on:
             command = 'ATE0'
         
-        response = self._send_command(command) 
+        response = self._send_command(command, sleeptime) 
 
         if len(response) and response[0] == 'OK':
             return True, command, None
