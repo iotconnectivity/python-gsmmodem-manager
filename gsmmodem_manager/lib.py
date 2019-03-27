@@ -417,13 +417,6 @@ class HuaweiE3372(HuaweiModem):
 
     def __init__(self, devicefile, baudrate, timeout=25):
         super(HuaweiE3372, self).__init__(devicefile, baudrate, timeout)
-        echo_off = False
-        counter = 0
-        while not echo_off:
-            if counter == 3:
-                raise Exception('Cannot set echo off')
-            echo_off,_,_ = self.set_echo(on=False)
-            counter += 1
     
     def stop_periodic_messages(self):
         command = 'AT^CURC=0'
