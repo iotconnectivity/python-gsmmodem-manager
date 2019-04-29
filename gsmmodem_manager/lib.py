@@ -305,6 +305,31 @@ class HuaweiModem(GSMModem):
         else:
             return False, command, response
 
+    def get_access_technology(self):
+        command = 'AT^SYSCFGEX?'
+        response = self._send_command(command)
+
+        if len(response) == 2 and response[1] == 'OK':
+            acqorder, band, roam, srvdomain, lteband = response[0].split(':')[1].split(',')
+            return True, command, {'acqorder': acqorder.replace('"',''), 'roam': roam}
+        else:
+            return False, command, response
+
+    def set_access_technology(self, act):
+        assert act in [self.ACT_AUTO, self.ACT_GSM, self.ACT_UMTS, self.ACT_LTE]
+        # ACT / Any Band / Roam enabled / CS+PS used / LTE Any Band
+        command = 'AT^SYSCFGEX="' + act + '",3FFFFFFF,1,2,7FFFFFFFFFFFFFFF,,' 
+        
+        # Lesser waiting time translates to error 
+        response = self._send_command(command, 2)
+        
+        # It can happen that switching bewteen ACT some
+        # trash characteres are generated
+        if len(response) > 0 and response[-1] == 'OK':
+            return True, command, response
+        else:
+            return False, command, response
+
 
 # Further details HUAWEI_MS2131_AT_Command_Interface_Specification
 class HuaweiMS2131(HuaweiModem):
@@ -372,35 +397,37 @@ class HuaweiMS2372h(HuaweiModem):
     def __init__(self, devicefile, baudrate, timeout=25):
         super(HuaweiMS2372h, self).__init__(devicefile, baudrate, timeout)
 
-    def get_access_technology(self):
-        command = 'AT^SYSCFGEX?'
-        response = self._send_command(command, sleeptime=10)
+    # Depreciated get ACT method. Works better with the one found on the E3372 model. It's now set as a global Huawei method in the global Huawei class.    
+    # def get_access_technology(self):
+    #    command = 'AT^SYSCFGEX?'
+    #    response = self._send_command(command, sleeptime=10)
 
-        if len(response) == 2 and response[1] == 'OK': 
-            acqorder, band, roam, srvdomain, lteband = response[0].split(':')[1].split(',')
-            return True, command, {'acqorder': acqorder.replace('"',''), 'roam': roam}
-        elif len(response) >= 2 and response[-1] == 'OK': 
-            acqorder, band, roam, srvdomain, lteband = response[-2].split(':')[1].split(',')
-            return True, command, {'acqorder': acqorder.replace('"',''), 'roam': roam}
-        else:
-            self._logger.error('Get access technology failed with: ' + str(response))
-            return False, command, response
+    #     if len(response) == 2 and response[1] == 'OK': 
+    #         acqorder, band, roam, srvdomain, lteband = response[0].split(':')[1].split(',')
+    #         return True, command, {'acqorder': acqorder.replace('"',''), 'roam': roam}
+    #     elif len(response) >= 2 and response[-1] == 'OK': 
+    #         acqorder, band, roam, srvdomain, lteband = response[-2].split(':')[1].split(',')
+    #         return True, command, {'acqorder': acqorder.replace('"',''), 'roam': roam}
+    #     else:
+    #         self._logger.error('Get access technology failed with: ' + str(response))
+    #         return False, command, response
 
-    def set_access_technology(self, act):
-        assert act in [self.ACT_AUTO, self.ACT_GSM, self.ACT_UMTS, self.ACT_LTE]
-        # ACT / Any Band / Roam enabled / CS+PS used / LTE Any Band
-        command = 'AT^SYSCFGEX="' + act + '",3FFFFFFF,1,2,7FFFFFFFFFFFFFFF,,' 
-        response = self._send_command(command, sleeptime=10)
+    # Depreciated set ACT method. Works better with the one found on the E3372 model. It's now set as a global Huawei method in the global Huawei class.    
+    # def set_access_technology(self, act):
+    #     assert act in [self.ACT_AUTO, self.ACT_GSM, self.ACT_UMTS, self.ACT_LTE]
+    #     # ACT / Any Band / Roam enabled / CS+PS used / LTE Any Band
+    #     command = 'AT^SYSCFGEX="' + act + '",3FFFFFFF,1,2,7FFFFFFFFFFFFFFF,,' 
+    #     response = self._send_command(command, sleeptime=10)
 
-        if len(response) and response[0] == 'OK':
-            return True, command, None
-        elif len(response) > 1 and response[-1] == 'OK':
-            return True, command, None
-        elif response == []:
-            return True, command, None
-        else:
-            self._logger.error('Set access technology failed with: ' + str(response))
-            return False, command, response
+    #     if len(response) and response[0] == 'OK':
+    #         return True, command, None
+    #     elif len(response) > 1 and response[-1] == 'OK':
+    #         return True, command, None
+    #     elif response == []:
+    #         return True, command, None
+    #     else:
+    #         self._logger.error('Set access technology failed with: ' + str(response))
+    #         return False, command, response
     
 
 class HuaweiE3372(HuaweiModem):
@@ -424,31 +451,6 @@ class HuaweiE3372(HuaweiModem):
 
         if len(response) >= 1 and response[-1] == 'OK':
             return True, command, response[-1]
-        else:
-            return False, command, response
-
-    def get_access_technology(self):
-        command = 'AT^SYSCFGEX?'
-        response = self._send_command(command)
-
-        if len(response) == 2 and response[1] == 'OK':
-            acqorder, band, roam, srvdomain, lteband = response[0].split(':')[1].split(',')
-            return True, command, {'acqorder': acqorder.replace('"',''), 'roam': roam}
-        else:
-            return False, command, response
-
-    def set_access_technology(self, act):
-        assert act in [self.ACT_AUTO, self.ACT_GSM, self.ACT_UMTS, self.ACT_LTE]
-        # ACT / Any Band / Roam enabled / CS+PS used / LTE Any Band
-        command = 'AT^SYSCFGEX="' + act + '",3FFFFFFF,1,2,7FFFFFFFFFFFFFFF,,' 
-        
-        # Lesser waiting time translates to error 
-        response = self._send_command(command, 2)
-        
-        # It can happen that switching bewteen ACT some
-        # trash characteres are generated
-        if len(response) > 0 and response[-1] == 'OK':
-            return True, command, response
         else:
             return False, command, response
 
