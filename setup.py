@@ -9,7 +9,7 @@
 from setuptools import setup
 
 setup(name='gsmmodem_manager',
-      version='0.1',
+      version='0.2',
       description=
       'Framework for communicating and interacting with 2G/3G/4G usb modems',
       author='J. Félix Ontañón',
