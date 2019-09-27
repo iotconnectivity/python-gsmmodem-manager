@@ -330,6 +330,18 @@ class HuaweiModem(GSMModem):
         else:
             return False, command, response
 
+    # Huawei specific modem reset, use this one over reset_modem_default
+    def reset_modem(self):
+        command = 'AT^RESET'
+        response = self._send_command(command, sleeptime=1)
+
+        # Sometimes modem send trash characters before the OK
+        # but if OK is the last line then everything went well
+        # this might be caused by the noise in serial connection
+        if len(response) > 0 and response[-1] == 'OK':
+            return True, command, response
+        else:
+            return False, command, response
 
 # Further details HUAWEI_MS2131_AT_Command_Interface_Specification
 class HuaweiMS2131(HuaweiModem):
