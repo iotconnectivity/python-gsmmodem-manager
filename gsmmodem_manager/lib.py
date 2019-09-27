@@ -244,8 +244,8 @@ class GSMModem(object):
         else:
             return False, command, response
 
-    def reset_modem(self):
-        command = 'AT^RESET'
+    def reset_modem_default(self):
+        command = 'ATZ'
         response = self._send_command(command, sleeptime=1)
 
         # Sometimes modem send trash characters before the OK
