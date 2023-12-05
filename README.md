@@ -52,7 +52,7 @@ sudo usermod -aG dialout,plugdev $USER
 You can install via pip from our Github repository directly (pending to submit to [pypi](https://pypi.org))
 
 ```shell
-pip install git+https://github.com/PodgroupConnectivity/python-gsmmodem-manager.git
+pip install git+https://github.com/IOTConnectivity/python-gsmmodem-manager.git
 ```
 
 As per the lack of dependencies, It has been succesfully tested on the following platforms:
